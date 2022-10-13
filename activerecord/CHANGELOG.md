@@ -1,3 +1,123 @@
+*   Fix Active Record serialization to not include instantiated but not loaded associations
+*   Validate using `:on` option when using `validates_associated`
+
+    Fixes an issue where `validates_associated` `:on`  option wasn't respected
+    when validated associated records.
+
+    *Austen Madden*, *Alex Ghiculescu*, *Rafał Brize*
+
+*   Allow overriding SQLite defaults from `database.yml`
+
+    *Jean Boussier*, *Ben Kyriakou*
+
+*   Allow `Sqlite3Adapter` to use `sqlite3` gem version `2.x`
+
+    *Mike Dalessio*
+
+*   Strict loading using `:n_plus_one_only` does not eagerly load child associations.
+
+    With this change, child associations are no longer eagerly loaded, to
+    match intended behavior and to prevent non-deterministic order issues caused
+    by calling methods like `first` or `last`. As `first` and `last` don't cause
+    an N+1 by themselves, calling child associations will no longer raise.
+    Fixes #49473.
+
+    Before:
+
+    ```ruby
+    person = Person.find(1)
+    person.strict_loading!(mode: :n_plus_one_only)
+    person.posts.first
+    # SELECT * FROM posts WHERE person_id = 1; -- non-deterministic order
+    person.posts.first.firm # raises ActiveRecord::StrictLoadingViolationError
+    ```
+
+    After:
+
+    ```ruby
+    person = Person.find(1)
+    person.strict_loading!(mode: :n_plus_one_only)
+    person.posts.first # this is 1+1, not N+1
+    # SELECT * FROM posts WHERE person_id = 1 ORDER BY id LIMIT 1;
+    person.posts.first.firm # no longer raises
+    ```
+
+    *Reid Lynch*
+
+*   Using `Model.query_constraints` with a single non-primary-key column used to raise as expected, but with an
+    incorrect error message. This has been fixed to raise with a more appropriate error message.
+
+    *Joshua Young*
+
+*   Fix `has_one` association autosave setting the foreign key attribute when it is unchanged.
+
+    This behaviour is also inconsistent with autosaving `belongs_to` and can have unintended side effects like raising
+    an `ActiveRecord::ReadonlyAttributeError` when the foreign key attribute is marked as read-only.
+
+    *Joshua Young*
+
+*   Fix an issue where `ActiveRecord::Encryption` configurations are not ready before the loading
+    of Active Record models, when an application is eager loaded. As a result, encrypted attributes
+    could be misconfigured in some cases.
+
+    *Maxime Réty*
+
+*   Properly synchronize `Mysql2Adapter#active?` and `TrilogyAdapter#active?`
+
+    As well as `disconnect!` and `verify!`.
+
+    This generally isn't a big problem as connections must not be shared between
+    threads, but is required when running transactional tests or system tests
+    and could lead to a SEGV.
+
+    *Jean Boussier*
+
+
+*   Fix counter caches when the foreign key is composite.
+
+    If the model holding the counter cache had a composite primary key,
+    inserting a dependent record would fail with an `ArgumentError`
+    `Expected corresponding value for...`
+
+    *fatkodima*
+
+*   Fix loading of schema cache for multiple databases.
+
+    Before this change, if you have multiple databases configured in your
+    application, and had schema cache present, Rails would load the same
+    cache to all databases.
+
+    *Rafael Mendonça França*
+
+*   Fix eager loading of composite primary key associations.
+
+    `relation.eager_load(:other_model)` could load the wrong records if `other_model`
+    had a composite primary key.
+
+    *Nikita Vasilevsky*
+
+*   Fix async queries returning a doubly wrapped result when hitting the query cache.
+
+    *fatkodima*
+
+*   Fix single quote escapes on default generated MySQL columns
+
+    MySQL 5.7.5+ supports generated columns, which can be used to create a column that is computed from an expression.
+
+    Previously, the schema dump would output a string with double escapes for generated columns with single quotes in the default expression.
+
+    This would result in issues when importing the schema on a fresh instance of a MySQL database.
+
+    Now, the string will not be escaped and will be valid Ruby upon importing of the schema.
+
+    *Yash Kapadia*
+
+*   Fix Migrations with versions older than 7.1 validating options given to
+    `t.references`.
+
+    *Hartley McGuire*
+
+
 ## Rails 7.1.3.3 (May 16, 2024) ##
 
 *   No changes.
