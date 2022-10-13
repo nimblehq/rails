@@ -1,4 +1,12 @@
 *   Fix Active Record serialization to not include instantiated but not loaded associations
+*   Validate using `:on` option when using `validates_associated`
+
+    Fixes an issue where `validates_associated` `:on`  option wasn't respected
+    when validated associated records.
+
+    *Austen Madden*, *Alex Ghiculescu*, *Rafał Brize*
+
+*   Allow overriding SQLite defaults from `database.yml`
 
     *Jean Boussier*, *Ben Kyriakou*
 
